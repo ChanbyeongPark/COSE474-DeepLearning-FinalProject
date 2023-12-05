@@ -44,10 +44,8 @@
 ## Methods
 
 ### Figure
-추가 예정  
-Multi-residual Network의 구조  
-Pre-activation building block과 ReLU dropped building block 구조 비교  
-Pre-activation bottleneck block과 ReLU dropped bottleneck block 구조 비교
+
+ReLU Dropped Basic Block(좌), ReLU Dropped Bottleneck Block(우)
 
 ## Experiments
 
@@ -56,10 +54,29 @@ Pre-activation bottleneck block과 ReLU dropped bottleneck block 구조 비교
 
 ### Computer Resource & Experimental Design
 Google Colab (Pro) - 사용한 CPU와 GPU는 실험 중 확인 후 작성  
-Pre-activation building block에 ReLU dropped function edge를 하나 추가한 Multi-ResNet과 기존 모델(e.g. ResNet)의 성능을 비교한다.  
-Pre-activation bottleneck block에 ReLU dropped function edge를 하나 추가한 Multi-ResNet과 기존 모델의 성능을 비교한다.  
-Pre-activation building block의 ReLU dropped function edge는 첫번째 ReLU를 제거한 형태이다.  
-Pre-activation bottleneck block에 ReLU dropped function edge는 첫번째, 두번째 ReLU를 제거한 형태이다.
+
+ResNet 논문과 유사한 실험 환경 사용  
+&rightarrow; SGD(lr=0.1, momentum=0.9, weight decay=0.0001)  
+&rightarrow; learning rate warm up으로 첫번째 epoch는 0.01을 사용한 뒤 0.1 사용. 이후 60, 120, 160 epoch부터 각각 0.01, 0.001, 0.0001으로 사용  
+&rightarrow; He initialization 사용, batch size는 128  
+&rightarrow; flip과 translation이라는 기본적인 augmentation만 사용
+
+기존 모델과의 비교를 위해 parameter의 개수를 1.7M로 통일  
+My Models: ReLU Dropped Multi-ResNet-56(basic block), ReLU Dropped Multi-ResNet-83(bottleneck block)
+
+기존 모델  
+Basic block: ResNet-110, PreActResNet-110, Multi-ResNet-8, Multi-ResNet14, Multi-ResNet30  
+Bottleneck block: ResNet-164, PreActResNet-164
+
+Basic block 모델은 CIFAR-10에만 사용(마지막 Conv 채널 개수가 64라서 CIFAR-100에 사용하기에는 부적절)
+Bottleneck block 모델은 CIFAR-10과 CIFAR-100에 사용
+
+RDM-ResNet-56을 CIFAR-10에 5번 수행  
+RDM-ResNet-83을 CIFAR-10와 CIFAR-100에 각각 5번 수행
+
+진행 과정 비교 용으로 PreActResNet-164를 CIFAR-10, CIFAR-100에 한 번씩 수행
+
+median(mean&pm;std)로 모델 성능 비교
 
 ### Quantitative Results
 실험 후 작성
@@ -68,12 +85,16 @@ Pre-activation bottleneck block에 ReLU dropped function edge는 첫번째, 두�
 실험 후 작성
 
 ### Figures(Plots) / Tables and Analysis
-실험 후 작성
+추가 예정
+
+RDM-ResNet-83(median) vs PreActResNet-164 for CIFAR-10 and CIFAR-100 (Training curve)  
+성능 비교 총 정리 Table (top-1 error)
 
 ### Discussion(Why method is successful or unsuccessful)
 실험 후 작성
 
 ## Future Direction
-Multi-Residual block의 function edge가 n개, Multi-ResNet의 depth가 d라고 했을 때, 해당 모델의 ensemble path가 거치는 평균적인 function edge의 개수는 $\frac{d}{1+n}$이다.  
+Multi-Residual block의 function edge가 n개, Multi-ResNet의 depth가 d라고 했을 때, 해당 모델의 ensemble path가 거치는 평균적인 function edge의 개수는 $\frac{d}{3(1+n)}$이다.
 Residual network가 ensemble의 형태로 작동한다는 논문에 따르면 학습에 가장 큰 영향을 미치는 effective path는 상대적으로 적은 module을 지난 경우이며, 대부분의 gradient도 얕은 layer에서 얻어진다.  
-따라서 모델의 parameter 개수가 일정한 경우, depth가 증가할 때 function edge의 개수도 증가시켜 거치는 평균 function edge의 개수가 해당 범위에 속하도록 하면 효율적인 학습이 가능할 것으로 보인다.
+따라서 모델의 parameter 개수가 일정한 경우, depth가 증가할 때 function edge의 개수도 증가시켜 거치는 평균 function edge의 개수가 해당 범위에 속하도록 하면 효율적인 학습이 가능할 것으로 보인다.  
+(layer가 충분히 많아 첫번째 layer와 마지막 layer를 무시할 수 있으며, 각 function edge가 모두 같은 개수의 parameter를 사용한다고 가정)  
