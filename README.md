@@ -1,7 +1,7 @@
 # Multi-Residual Networks with ReLU Dropping
 
 ## Objective
-기존의 residual block에 ReLU dropped function edge를 추가한 block의 모델이 이미지 분류에서 성능 향상을 보일 수 있는지 확인한다.
+기존의 residual block에 ReLU dropped residual function을 추가한 모델이 이미지 분류에서 성능 향상을 보일 수 있는지 확인한다.
 
 ## Related Work
 
@@ -35,11 +35,11 @@
 이미지 분류
 
 ### Contribution
-1. Multi-residual block은 1개의 identity edge와 n개의 function edge로 구성된다.
+1. 동일한 구조의 residual function을 여러 개 사용하는 multi-residual block은 각 residual function이 동일한 데이터와 알고리즘으로 학습하기 때문에 multiplicity가 증가한다는 이점을 얻기 어려울 수 있다.
+따라서 ensemble의 다양성을 위해 ReLU dropped residual function을 사용하며, 이를 통해 multiplicity의 증가와 ReLU dropped의 일반화 특성으로 성능이 향상될 수 있는지 확인한다.
+2. Multi-residual block은 1개의 identity edge와 n개의 function edge로 구성된다.
 전체 edge의 개수가 일정하다면 block의 edge의 개수가 3일 때 가장 많은 ensemble의 개수(multiplicity)를 얻으며, 
 따라서 function edge가 2개인 경우 기존에 비해 더 뛰어난 성능을 보일 수 있는지 확인한다.
-2. 동일한 형태의 function edge를 사용하는 multi-residual block은 동일한 데이터가 동일한 알고리즘으로 작동하기 때문에 multiplicity가 증가한다는 이점을 얻기 어려울 수 있다.
-그대신 ensemble의 다양성을 얻기 위해 ReLU dropping을 적용한 function edge을 사용하며, 이를 통해 multiplicity의 증가와 ReLU dropping의 일반화된 특성으로 이점을 얻을 수 있는지 확인한다.
 
 ## Methods
 
@@ -51,10 +51,12 @@ ReLU Dropped Basic Block(좌), ReLU Dropped Bottleneck Block(우)
 ## Experiments
 
 ### Dataset
-기존 모델과의 용이한 성능 비교를 위해 이미지 분류에서 주로 사용되는 CIFAR-10과 CIFAR-100을 사용한다.
+기존 모델과의 용이한 성능 비교를 위해 이미지 분류에서 주로 사용되는 CIFAR-10을 사용한다.
 
 ### Computer Resource & Experimental Design
-Google Colab (Pro) - 사용한 CPU와 GPU는 실험 중 확인 후 작성  
+Google Colab Pro  
+CPU: Intel Xeon 2.20 GHz  
+GPU: NVIDIA V100
 
 ResNet 논문과 유사한 실험 환경 사용  
 &rightarrow; SGD(lr=0.1, momentum=0.9, weight decay=0.0001)  
@@ -69,33 +71,22 @@ My Models: ReLU Dropped Multi-ResNet-56(basic block), ReLU Dropped Multi-ResNet-
 Basic block: ResNet-110, PreActResNet-110, Multi-ResNet-8, Multi-ResNet14, Multi-ResNet30  
 Bottleneck block: ResNet-164, PreActResNet-164
 
-Basic block 모델은 CIFAR-10에만 사용(마지막 Conv 채널 개수가 64라서 CIFAR-100에 사용하기에는 부적절)
-Bottleneck block 모델은 CIFAR-10과 CIFAR-100에 사용
-
-RDM-ResNet-56을 CIFAR-10에 3번 수행  
-RDM-ResNet-83을 CIFAR-10와 CIFAR-100에 각각 3번 수행
-
-진행 과정 비교 용으로 PreActResNet-164를 CIFAR-10, CIFAR-100에 한 번씩 수행
+CIFAR-10에 대해 RDM-ResNet-56와 RDM-ResNet-83을 각각 5번 수행
 
 median(mean&pm;std)로 모델 성능 비교
 
-### Quantitative Results
-실험 후 작성
+### Results
 
-### Qualitative Results
-실험 후 작성
+r은 block을 구성하는 residual function의 개수를 나타낸다.
 
-### Figures(Plots) / Tables and Analysis
-추가 예정
+| Model             | Depth | r     | Error Rate(%)      |
+| :---:             | :---: | :---: | :---:              |
+| PreActResNet      | 110   | 1     | 6.37               |
+| PreActResNet      | 164   | 1     | 5.46               |
+| Multi-ResNet      | 8     | 23    | 7.37               |
+| Multi-ResNet      | 14    | 10    | 6.42               |
+| Multi-ResNet      | 30    | 4     | 5.89               |
+| RDM-ResNet(Mine)  | 56    | 2     | 5.98(5.98&pm;0.20) |
+| RDM-ResNet(Mine)  | 83    | 2     | 5.41(5.34&pm;0.12) |
 
-RDM-ResNet-83(median) vs PreActResNet-164 for CIFAR-10 and CIFAR-100 (Training curve)  
-성능 비교 총 정리 Table (top-1 error)
-
-### Discussion(Why method is successful or unsuccessful)
-실험 후 작성
-
-## Future Direction
-Multi-Residual bottleneck block의 function edge가 n개, Multi-ResNet의 depth가 d라고 했을 때, 해당 모델의 ensemble path가 거치는 평균적인 function edge의 개수는 $\frac{d}{3(1+n)}$이다.
-Residual network가 ensemble의 형태로 작동한다는 논문에 따르면 학습에 가장 큰 영향을 미치는 effective path는 상대적으로 적은 module을 지난 경우이며, 대부분의 gradient도 얕은 layer에서 얻어진다.  
-따라서 모델의 parameter 개수가 일정한 경우, depth가 증가할 때 function edge의 개수도 증가시켜 거치는 평균 function edge의 개수가 해당 범위에 속하도록 하면 효율적인 학습이 가능할 것으로 보인다.  
-(layer가 충분히 많아 첫번째 layer와 마지막 layer를 무시할 수 있으며, 각 function edge가 모두 같은 개수의 parameter를 사용한다고 가정)  
+<img src="https://github.com/ChanbyeongPark/COSE474-DeepLearning-FinalProject/assets/78645777/9f684ae5-8b9e-4192-b1a3-a35c2022c84c">
